@@ -1,4 +1,6 @@
-from imports import *
+import csv
+from collections import OrderedDict
+from numpy import round
 
 def arguments():
     """adding arguments for the script"""
@@ -45,14 +47,14 @@ def main():
         for region, sitecount in sitecounts.items():
             print '\t'.join([
                 region,
-                str(np.round(sitecount, 5)),
+                str(round(sitecount, 5)),
             ])
     else:
         with open(args.output_file, 'w') as outf:
             for region, sitecount in sitecounts.items():
                 outf.write("\t".join([
                 region,
-                str(np.round(sitecount, 5)) + '\n',
+                str(round(sitecount, 5)) + '\n',
                 ]))
     return 0
 

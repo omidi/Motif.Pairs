@@ -28,23 +28,29 @@ def submitJob(filename, dest, cutoff=0.):
     12 hours to be finished."""
     name = path.basename(filename)
     cmd = " ".join([
-        "process_motevo_output.py",
-        "-i %s" % filename,
-        "-o %s" % path.join(dest, name),
-        "-c %f" % cutoff,
+        "python",
+        "~/codes/Motif.Pairs/MotEvo.output/process_motevo_output.py",
+        '-i "%s" \\\n' % filename,
+        '-o "%s" \\\n' % path.join(dest, name),
+        '-c %f \n' % cutoff,
     ])
-    with open("job_%s.sh" % name) as inf:
+    cmd += "cd %s\n" % dest 
+    cmd += 'gzip -f "%s"\n' % name
+    
+    with open("job_%s.sh" % name, "w") as inf:
         inf.write("\n".join([
             '#!/bin/bash',
             '#BSUB -L /bin/bash',
             '#BSUB -o "%s.stdout"' % name,
             '#BSUB -e "%s.stderr"' % name,
             '#BSUB -J "%s"' % name,
+            '#BSUB -M 500000',
+            '#BSUB -R rusage[mem=500]',
             '#BSUB normal',
             '',
             cmd,
         ]))
-    # system('bsub < %s' % ("job_%s.sh" % name))
+    system('bsub < "%s"' % ("job_%s.sh" % name))
     return 0
 
 
