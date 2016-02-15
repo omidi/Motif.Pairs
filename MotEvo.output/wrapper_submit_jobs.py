@@ -50,7 +50,7 @@ def submitJob(filename, dest, cutoff=0.):
             '',
             cmd,
         ]))
-    system('bsub < "%s"' % ("job_%s.sh" % name))
+    # system('bsub < "%s"' % ("job_%s.sh" % name))
     return 0
 
 

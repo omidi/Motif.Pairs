@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import csv
 from numpy import round
+import gzip
 
 def arguments():
     """adding arguments for the script"""
@@ -32,7 +33,7 @@ def count_double_motifs(file_a, file_b):
     counts1 = dict()
     counts2 = dict()
     regions = OrderedDict()
-    with open(file_a) as inf1, open(file_b) as inf2:
+    with gzip.open(file_a) as inf1, gzip.open(file_b) as inf2:
         for rec in csv.reader(inf1, delimiter='\t'):
             counts1.setdefault(rec[0], float(rec[1]))
             regions.setdefault(rec[0], 0.)
@@ -45,6 +46,7 @@ def count_double_motifs(file_a, file_b):
             regions[region] = counts1[region] + counts2[region]
 
     return regions
+
 
 def main():
     args = arguments()

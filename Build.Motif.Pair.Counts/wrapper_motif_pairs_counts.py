@@ -27,12 +27,13 @@ def submitJob(file1, file2, dest):
     name1 = path.basename(file1)
     name2 = path.basename(file2)
     job_name = "%s_with_%s" % (name1, name2)
+    job_name = job_name.replace('.gz', '')
     cmd = " ".join([
         "python",
-        "~/codes/Motif.Pairs/Build.Motif.Pair.Counts/motif_pairs_counts.py",
+        "~/codes/Motif.Pairs/Build.Motif.Pair.Counts/motif_pairs_counts.py \\\n",
         '-a "%s" \\\n' % file1,
         '-b "%s" \\\n' % file2,
-        '-o "%s" \\\n' % path.join(dest, job_name),
+        '-o "%s" \n' % path.join(dest, job_name),
     ])
     cmd += "cd %s\n" % dest
     cmd += 'gzip -f "%s"\n' % job_name
@@ -55,9 +56,9 @@ def submitJob(file1, file2, dest):
 
 def main():
     args = arguments()
-    files = [path.join(args.dirname, f) for f in listdir(args.dirname)]
+    files = [path.join(args.dirname, f) for f in listdir(args.dirname)][:20]  # temporary for test
     for pairs in combinations(files, 2):  # for every pair but the order is irrelevant
-        submitJob(pairs[0], pairs[2], args.destination_dir)
+        submitJob(pairs[0], pairs[1], args.destination_dir)
     return 0
 
 
