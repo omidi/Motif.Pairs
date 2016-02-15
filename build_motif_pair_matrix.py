@@ -16,4 +16,4 @@ with open(sitecount_file) as inf:
     for rec in csv.reader(inf, delimiter='\t'):
         counts = np.array(map(float, rec[1:]))
         for pairs in combinations(np.arange(num_motifs), 2):
-            mat[pairs] = mat[pairs[::-1]] = counts[pairs[0]] + counts[pairs[1]]
+            mat[pairs] = mat[pairs[::-1]] = counts[pairs[0]] + counts[pairs[1]]  # some changes
