@@ -1,5 +1,6 @@
 from imports import *
 
+
 tfbs_directory = "data/closest_bed"
 filesnames = [path.join(tfbs_directory, f) for f in
          listdir(tfbs_directory) if re.search('\.bed$', f)]
