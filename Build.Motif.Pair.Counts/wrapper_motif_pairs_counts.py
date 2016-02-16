@@ -44,13 +44,13 @@ def submitJob(file1, file2, dest):
             '#BSUB -o "%s.stdout"' % job_name,
             '#BSUB -e "%s.stderr"' % job_name,
             '#BSUB -J "%s"' % job_name,
-            '#BSUB -M 500000',
-            '#BSUB -R rusage[mem=500]',
+            '#BSUB -M 1000000',
+            '#BSUB -R rusage[mem=1000]',
             '#BSUB normal',
             '',
             cmd,
         ]))
-    system('bsub < "%s"' % ("job_%s.sh" % job_name))
+    # system('bsub < "%s"' % ("job_%s.sh" % job_name))
     return 0
 
 

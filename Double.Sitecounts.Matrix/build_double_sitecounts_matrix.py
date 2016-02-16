@@ -1,6 +1,6 @@
 import os
 import re
-
+import gzip
 import numpy as np
 from itertools import combinations
 
@@ -27,31 +27,37 @@ def arguments():
 
 def main():
     args = arguments()
-    motifs = np.array([f.replace('gz', '').split("_with_")
+    motifs = np.array([f.replace('.gz', '').split("_with_")
                        for f in os.listdir(args.dirname)])
     motifs = np.sort(np.unique(motifs.flatten()))
-    index = dict([(motif, i) for motif, i in enumerate(motifs)])
+    print len(motifs)
+    
+    index = dict([(motif, i) for i, motif in enumerate(motifs)])
     mat = np.zeros((len(motifs), len(motifs)), dtype=np.float32)
     for pair in combinations(motifs, 2):
+        print pair
         fnames = [f for f in os.listdir(args.dirname) if re.search(pair[0], f)]
-        fname = [f for f in fnames if re.search(pair[1], f)].pop()
+        try:
+            fname = os.path.join(args.dirname, [f for f in fnames if re.search(pair[1], f)].pop())
+        except IndexError:
+            print pair
         del fnames
         double_counts = np.sum([float(l.split()[-1]) for l in
-                              open(os.path.join(args.dirname, fname), 'r')])
+                              gzip.open(fname, 'r')])
+        print fname, double_counts
         mat[index[pair[0]], index[pair[1]]] = \
             mat[index[pair[1]], index[pair[0]]] = double_counts
-
     if args.outfile:
         with open(args.outfile, 'w') as outf:
-            outf.write('\t'.join([motifs]) + '\n')
-            for row, i in enumerate(mat):
+            outf.write('\t'.join(motifs) + '\n')
+            for i, row in enumerate(mat):
                 outf.write('\t'.join([
                     motifs[i],
                     '\t'.join(map(str, np.round(row, 6))) + '\n',
                 ]))
     else:
-        print '\t'.join([motifs])
-        for row, i in enumerate(mat):
+        print '\t'.join(motifs)
+        for i, row in enumerate(mat):
             print '\t'.join([
                 motifs[i],
                 '\t'.join(map(str, np.round(row, 6)))
