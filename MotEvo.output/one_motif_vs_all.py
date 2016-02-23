@@ -173,11 +173,16 @@ def main():
             for i, d in enumerate(dist):
                 outf.write('\t'.join([
                     str(i),
-                    str(np.round(d, 6)) + '\n',
+                    str(d) + '\n',
                 ]))
 
-    for motif, count in double_sitecounts.items():
-        print motif, '\t', count
+    with open( os.path.join(outdir, os.path.basename(args.input_file)), 'w') as outf:
+        outf.write(os.path.basename(args.input_file) + '\n')
+        for motif, count in double_sitecounts.items():
+            outf.write('\t'.join([
+                motif,
+                str(count) + '\n',
+            ]))
     return 0
 
 
