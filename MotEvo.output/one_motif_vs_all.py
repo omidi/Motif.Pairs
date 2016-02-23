@@ -23,7 +23,7 @@ def arguments():
                         type=str, required=True,
                         help='The filename for the motif of interest in the '
                              'MotEvo output directory')
-    parser.add_argument('-output', '--output', dest='output_dir', action='store',
+    parser.add_argument('-o', '--output', dest='output_dir', action='store',
                         type=str, required=False,
                         help="""Output directory to store the results.
                         If not given it assumes automatically the current working
@@ -38,7 +38,7 @@ def arguments():
                         Only sites within the regions of interest will be added to the
                         final sitecount. Note that, if not provided, all regions will
                         be considered to build the sitecounts.""")
-    parser.add_argument('-o', '--overlap', dest='overlap', action='store',
+    parser.add_argument('-m', '--overlap', dest='overlap', action='store',
                         type=int, required=False, default=1,
                         help="""Optional parameter that determines how far two sites need
                         to be from each other, to be considered non-overlapping.

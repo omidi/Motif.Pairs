@@ -20,9 +20,9 @@ def arguments():
                         type=str, required=False,
                         help="""Optional output file name, if not given the results
                         appear on console""")
+
     args = parser.parse_args()
     return args
-
 
 
 def main():
