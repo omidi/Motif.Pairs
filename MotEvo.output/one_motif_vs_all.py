@@ -1,6 +1,6 @@
 import csv
 from collections import OrderedDict
-from numpy import round
+import numpy as np
 import os
 
 def arguments():
@@ -38,6 +38,11 @@ def arguments():
                         Only sites within the regions of interest will be added to the
                         final sitecount. Note that, if not provided, all regions will
                         be considered to build the sitecounts.""")
+    parser.add_argument('-o', '--overlap', dest='overlap', action='store',
+                        type=int, required=False, default=1,
+                        help="""Optional parameter that determines how far two sites need
+                        to be from each other, to be considered non-overlapping.
+                        By default it's set to 1""")
     args = parser.parse_args()
     return args
 
@@ -106,36 +111,41 @@ def count_double_motifs(sites, filename, overlap_limit=1, cutoff=0., proxy=None)
     :return: a dictionary that counts double appearance of motifs, where the overlapping sites are filtered
     """
     double_sitecounts = OrderedDict()
+    dist = np.zeros(500, dtype=np.float16)
     with open(filename, 'r') as inf:
         for rec in csv.reader(inf, delimiter='\t'):
             region_name = rec[3].split(";")[-1]
+            if not (region_name in sites):
+                continue
             post = float(rec[4])
             if post > cutoff:
                 double_sitecounts.setdefault(region_name, 0)
-                double_sitecounts[region_name][0] += post
                 start = int(rec[1])
                 end = int(rec[2])
                 strand = rec[10]
                 for a_site in sites[region_name]:
-                    if a_site["start"] == strand:   # test whether two sites overlap
+                    if a_site["strand"] == strand:   # test whether two sites overlap
                         if strand == "+":
-                            if start > a_site["start"]:
-                                if (a_site["end"] - start + overlap_limit) < 0:
-                                    double_sitecounts[region_name] += 1
+                            if start >= a_site["start"]:
+                                if (a_site["end"] + overlap_limit - start - 1) < 0:
+                                    dist[np.abs(a_site["start"] - start)] += post
+                                    double_sitecounts[region_name] = 1
                             else:
-                                if (end - a_site["start"] + overlap_limit) < 0:
-                                    double_sitecounts[region_name] += 1
+                                if (end + overlap_limit - a_site["start"] - 1) < 0:
+                                    dist[np.abs(a_site["start"] - start)] += post
+                                    double_sitecounts[region_name] = 1
                         else:
-                            if start < a_site["end"]:
+                            if a_site["start"] <= end:
                                 if (end - a_site["start"] + overlap_limit) < 0:
-                                    double_sitecounts[region_name] += 1
+                                    dist[np.abs(a_site["start"] - start)] += post
+                                    double_sitecounts[region_name] = 1
                             else:
-                                if (a_site["end"] - start + overlap_limit) < 0:
-                                    double_sitecounts[region_name] += 1
-                    else:   # if they come from opposite strands, they will be counted, regardless of overlap
-                        double_sitecounts[region_name] += 1
-    return double_sitecounts
+                                dist[np.abs(a_site["start"] - start)] += post
+                                double_sitecounts[region_name] = 1
 
+                    else:   # if they come from opposite strands, they will be counted, regardless of overlap
+                        double_sitecounts[region_name] = 1
+    return (np.sum(double_sitecounts.values()), dist)
 
 
 def main():
@@ -146,8 +156,28 @@ def main():
     else:
         regions_of_interest = None
 
-    for motevo_output_file in os.listdir(args.dirname):
-        count_double_motifs(motif_sites, motevo_output_file, args.cutoff, regions_of_interest)
+    if args.output_dir:
+        outdir = args.output_dir
+    else:
+        outdir = ''
+
+    double_sitecounts = OrderedDict()
+    for motif in os.listdir(args.dirname):
+        motevo_output_file = os.path.join(args.dirname, motif)
+        double_sitecounts.setdefault(motif, 0)
+        double_sitecounts[motif], dist = \
+                count_double_motifs(motif_sites, motevo_output_file, args.overlap, args.cutoff, regions_of_interest)
+
+        fname = os.path.join(outdir, '%s.dist' % motif)
+        with open(fname, 'w') as outf:
+            for i, d in enumerate(dist):
+                outf.write('\t'.join([
+                    str(i),
+                    str(np.round(d, 6)) + '\n',
+                ]))
+
+    for motif, count in double_sitecounts.items():
+        print motif, '\t', count
     return 0
 
 
