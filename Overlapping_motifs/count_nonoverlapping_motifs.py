@@ -103,27 +103,31 @@ def count_nonoverlapping_motifs(sites, filename, cutoff=0.):
     """
     double_sitecounts = OrderedDict()
     dist = np.zeros(500, dtype=np.float16)
+    for region in sites.keys():
+        double_sitecounts.setdefault(region, 0)    
     with open(filename, 'r') as inf:
         for rec in csv.reader(inf, delimiter='\t'):
             region_name = rec[3].split(";")[-1]
             double_sitecounts.setdefault(region_name, 0)
             if not (region_name in sites):
                 continue
-
             post = float(rec[4])
             if post > cutoff:
                 start = int(rec[1])
                 end = int(rec[2])
                 for a_site in sites[region_name]:
-                    distance = int(np.abs((start + (end - start)/2) - \
-                                            (a_site["start"] + (a_site["end"] - a_site["start"])/2)))
-                    dist[distance] += 1
                     if start >= a_site["start"]:
                         if (a_site["end"] - start) < 0:
-                            double_sitecounts[region_name] = 1
+                            double_sitecounts[region_name] = 1 
+                            distance = int(np.abs((start + (end - start)/2) - \
+                                                (a_site["start"] + (a_site["end"] - a_site["start"])/2)))
+                            dist[distance] += 1                           
                     else:
                         if (end - a_site["start"]) < 0:
                             double_sitecounts[region_name] = 1
+                            distance = int(np.abs((start + (end - start)/2) - \
+                                                (a_site["start"] + (a_site["end"] - a_site["start"])/2)))
+                            dist[distance] += 1                            
     return double_sitecounts, dist
 
 
@@ -149,10 +153,10 @@ def main():
                 ]))
 
     with open( os.path.join(outdir, os.path.basename(args.input_file)), 'w') as outf:
-        outf.write('\t'.join([motif in double_sitecounts.keys()]) + '\n')
+        outf.write('\t'.join([motif for motif in double_sitecounts.keys()]) + '\n')
         for region in motif_sites.keys():
             outf.write(region + '\t')
-            outf.write('\t'.join([double_sitecounts[motif][region] for motif in double_sitecounts.keys()]))
+            outf.write('\t'.join([str(double_sitecounts[motif][region]) for motif in double_sitecounts.keys()]))            
             outf.write('\n')
     return 0
 

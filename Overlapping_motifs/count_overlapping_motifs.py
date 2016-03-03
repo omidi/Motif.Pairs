@@ -103,10 +103,11 @@ def count_overlapping_motifs(sites, filename, cutoff=0.):
     :return: a dictionary that counts double appearance of motifs, where the overlapping sites are filtered
     """
     double_sitecounts = OrderedDict()
+    for region in sites.keys():
+        double_sitecounts.setdefault(region, 0)
     with open(filename, 'r') as inf:
         for rec in csv.reader(inf, delimiter='\t'):
             region_name = rec[3].split(";")[-1]
-            double_sitecounts.setdefault(region_name, 0)
             if not (region_name in sites):
                 continue
             post = float(rec[4])
@@ -137,10 +138,11 @@ def main():
         double_sitecounts[motif] = \
                 count_overlapping_motifs(motif_sites, motevo_output_file, args.cutoff)
     with open( os.path.join(outdir, os.path.basename(args.input_file)), 'w') as outf:
-        outf.write('\t'.join([motif in double_sitecounts.keys()]) + '\n')
+        
+        outf.write('\t'.join([motif for motif in double_sitecounts.keys()]) + '\n')
         for region in motif_sites.keys():
             outf.write(region + '\t')
-            outf.write('\t'.join([double_sitecounts[motif][region] for motif in double_sitecounts.keys()]))
+            outf.write('\t'.join([str(double_sitecounts[motif][region]) for motif in double_sitecounts.keys()]))
             outf.write('\n')
     return 0
 

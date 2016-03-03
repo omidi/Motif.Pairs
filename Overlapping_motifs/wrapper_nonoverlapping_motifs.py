@@ -5,10 +5,6 @@ def arguments():
     """adding arguments for the script"""
     import argparse
     parser = argparse.ArgumentParser(description="""
-    Given a directory that contains all the motif sitecounts,
-    as produced by "process_motevo_output.py" script, this script
-    submits for each pairs of motifs a job to the queue to calculate
-    the pair-counts (sum of two posteriors).
     """)
     parser.add_argument('-d', '--dir', dest='dirname', action='store',
                         type=str, required=True,
@@ -20,45 +16,42 @@ def arguments():
     return args
 
 
-def submitJob(file1, file2, dest):
+def submitJob(input_dir, motif_file, dest):
     """For each file, it submites a job the the queue
     The job type is set to be Normal which means it must take at most
     12 hours to be finished."""
-    name1 = path.basename(file1)
-    name2 = path.basename(file2)
-    job_name = "%s_with_%s" % (name1, name2)
-    job_name = job_name.replace('.gz', '')
+    motif_name = path.basename(motif_file)
+    job_name = "%s_nonoverl" % (motif_name)
+    dest = path.join(dest, motif_name)
+    system('mkdir %s' % dest)
     cmd = " ".join([
         "python",
-        "~/codes/Motif.Pairs/Build.Motif.Pair.Counts/motif_pairs_counts.py \\\n",
-        '-a "%s" \\\n' % file1,
-        '-b "%s" \\\n' % file2,
-        '-o "%s" \n' % path.join(dest, job_name),
-    ])
-    cmd += "cd %s\n" % dest
-    cmd += 'gzip -f "%s"\n' % job_name
-    with open("job_%s.sh" % job_name, "w") as inf:
+        "~/codes/Motif.Pairs/Overlapping_motifs/count_nonoverlapping_motifs.py \\\n",
+        '-d "%s" \\\n' % input_dir,
+        '-i "%s" \\\n' % motif_file,
+        '-c 0.5 \\\n', 
+        '-o "%s" \n' % dest,
+    ])    
+    with open("job_%s_nonoverlapping.sh" % job_name, "w") as inf:
         inf.write("\n".join([
             '#!/bin/bash',
             '#BSUB -L /bin/bash',
             '#BSUB -o "%s.stdout"' % job_name,
             '#BSUB -e "%s.stderr"' % job_name,
             '#BSUB -J "%s"' % job_name,
-            '#BSUB -M 1000000',
-            '#BSUB -R rusage[mem=1000]',
             '#BSUB normal',
             '',
             cmd,
         ]))
-    system('bsub < "%s"' % ("job_%s.sh" % job_name))
+    system('bsub < "%s"' % ("job_%s_nonoverlapping.sh" % job_name))
     return 0
 
 
 def main():
     args = arguments()
     files = [path.join(args.dirname, f) for f in listdir(args.dirname)]  # temporary for test
-    for pairs in combinations(files, 2):  # for every pair but the order is irrelevant
-        submitJob(pairs[0], pairs[1], args.destination_dir)
+    for motif in files:
+        submitJob(args.dirname, motif, args.destination_dir)
     return 0
 
 
