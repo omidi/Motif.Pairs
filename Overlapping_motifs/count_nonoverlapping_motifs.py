@@ -109,7 +109,7 @@ def count_nonoverlapping_motifs(sites, filename, cutoff=0.):
             double_sitecounts.setdefault(region_name, 0)
             if not (region_name in sites):
                 continue
-                
+
             post = float(rec[4])
             if post > cutoff:
                 start = int(rec[1])
