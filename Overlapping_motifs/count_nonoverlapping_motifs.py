@@ -117,13 +117,22 @@ def count_nonoverlapping_motifs(sites, filename, cutoff=0.):
                 end = int(rec[2])
                 for a_site in sites[region_name]:
                     if start >= a_site["start"]:
-                        if (a_site["end"] - start) < 0:
+                        if (a_site["end"] - start) > 0:
+                            continue
+                    else:
+                        if (end - a_site["start"]) > 0:
+                            continue
+                # if it didn' overlap any of the binding sites, then
+                # test for the distance of the co-occurance of the motifs
+                for a_site in sites[region_name]:
+                    if start >= a_site["start"]:
+                        if (a_site["end"] - start) <= 0:
                             double_sitecounts[region_name] = 1 
                             distance = int(np.abs((start + (end - start)/2) - \
                                                 (a_site["start"] + (a_site["end"] - a_site["start"])/2)))
                             dist[distance] += 1                           
                     else:
-                        if (end - a_site["start"]) < 0:
+                        if (end - a_site["start"]) <= 0:
                             double_sitecounts[region_name] = 1
                             distance = int(np.abs((start + (end - start)/2) - \
                                                 (a_site["start"] + (a_site["end"] - a_site["start"])/2)))
