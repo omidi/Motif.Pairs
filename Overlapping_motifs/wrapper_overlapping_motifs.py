@@ -39,6 +39,8 @@ def submitJob(input_dir, motif_file, dest):
             '#BSUB -o "%s.stdout"' % job_name,
             '#BSUB -e "%s.stderr"' % job_name,
             '#BSUB -J "%s"' % job_name,
+            '#BSUB -M 10000000',
+            '#BSUB -R rusage[mem=10000]',            
             '#BSUB normal',
             '',
             cmd,
