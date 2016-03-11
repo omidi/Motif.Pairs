@@ -35,6 +35,7 @@ def arguments():
 
 
 def main():
+    
     args = arguments()
     if args.proxy:
         regions_of_interest = dict([(l.split()[4], 0)
