@@ -18,13 +18,13 @@ def arguments():
                         type=str, required=True,
                         help="""Motif name, it's bascially name of one of the directory in
                         the overlapping or non-overlapping directory.""")
-    parser.add_argument('-n', '--novr', dest='nonoverlapping_dir', action='store',
-                        type=str, required=True,
-                        help="""A directory with results for counting
-                        non-overlapping motifs. Made by ''count_nonoverlapping_motifs.py""")
-    parser.add_argument('-i', '--motevo', dest='motevo_dir', action='store',
-                        type=str, required=True,
-                        help="""Directory with all MotEvo output files""")
+    # parser.add_argument('-n', '--novr', dest='nonoverlapping_dir', action='store',
+    #                     type=str, required=True,
+    #                     help="""A directory with results for counting
+    #                     non-overlapping motifs. Made by ''count_nonoverlapping_motifs.py""")
+    # parser.add_argument('-i', '--motevo', dest='motevo_dir', action='store',
+    #                     type=str, required=True,
+    #                     help="""Directory with all MotEvo output files""")
     parser.add_argument('-r', '--regions', dest='regions', action='store',
                         type=str, required=True,
                         help="""A BED file that contains regions of interest.
@@ -64,28 +64,34 @@ def load_single_counts(dirname, motif, regions, cutoff=.5):
     return np.array([counts[r] for r in regions])
 
 
-def correlation_score(N1, N2, M):
+def correlation_score(N1, N2):
     pseudo = .5
-    m = np.sum(2*M)
     n1 = np.sum(N1)
     n2 = np.sum(N2)
     score = log(2.) + log(pseudo) + gammaln(len(N1) + 2*pseudo) + gammaln(len(N2) + 2*pseudo)
-    score += gammaln(m + pseudo) + gammaln(2*len(M) - m + pseudo)
-    score -= log(2.*pseudo) + gammaln(2*len(M) + pseudo*2) + gammaln(n1 + pseudo) + gammaln(n2 + pseudo)
+    score += gammaln(n1 + n2 + pseudo) + gammaln(2*len(N1) - n1 - n2 + pseudo)
+    score -= log(2.*pseudo) + gammaln(2*len(N1) + pseudo*2) + gammaln(n1 + pseudo) + gammaln(n2 + pseudo)
     score -= gammaln(len(N1) - n1 + pseudo) + gammaln(len(N2) - n2 + pseudo)
     return score
 
 
 def main():
     args = arguments()
+    args.motevo_dir = "/home/somidi/scratch/Tissue.Specificity/Motif.Pairs/MotEvo.Outputs/min.post.50/"
+    args.overlapping = "/home/somidi/scratch/Tissue.Specificity/Motif.Pairs/Pairs.Counts/Overlapping/"
     regions = [l.split()[4] for l in open(args.regions)]   # by default it's assumed that 5th contains region IDs
     motif_names = os.listdir(args.motevo_dir)
     header, double_counts = \
-            load_double_counts_matrix(args.nonoverlapping_dir, args.motif, regions)
-    print motif_names[4]
-    N2 = load_single_counts(args.motevo_dir, motif_names[4], regions)
+            load_double_counts_matrix(args.overlapping, args.motif, regions)
+
     N1 = load_single_counts(args.motevo_dir, args.motif, regions)
-    print double_counts[header[motif_names[4]], header[args.motif]]
+    for motif in motif_names:
+        N2 = load_single_counts(args.motevo_dir, motif, regions)
+        print '\t'.join([motif,
+                         "%0.4f" % correlation_score(N1, N2),
+                         "%d" % np.sum(double_counts[header[motif], ...]),
+                         "%d" % len(regions),
+                         ])
 
 
 
