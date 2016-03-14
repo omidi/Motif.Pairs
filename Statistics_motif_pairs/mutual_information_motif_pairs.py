@@ -76,6 +76,7 @@ def correlation_score(N1, N2):
 
 
 def main():
+    
     args = arguments()
     args.motevo_dir = "/home/somidi/scratch/Tissue.Specificity/Motif.Pairs/MotEvo.Outputs/min.post.50/"
     args.overlapping = "/home/somidi/scratch/Tissue.Specificity/Motif.Pairs/Pairs.Counts/Overlapping/"
