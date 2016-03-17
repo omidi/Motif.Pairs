@@ -23,7 +23,7 @@ def submitJob(input_dir, motif_file, dest):
     motif_name = path.basename(motif_file)
     job_name = "%s_overl" % (motif_name)
     dest = path.join(dest, motif_name)
-    system('mkdir %s' % dest)
+    system('mkdir "%s"' % dest)
     cmd = " ".join([
         "python",
         "~/codes/Motif.Pairs/Overlapping_motifs/count_overlapping_motifs.py \\\n",
@@ -39,8 +39,8 @@ def submitJob(input_dir, motif_file, dest):
             '#BSUB -o "%s.stdout"' % job_name,
             '#BSUB -e "%s.stderr"' % job_name,
             '#BSUB -J "%s"' % job_name,
-            '#BSUB -M 10000000',
-            '#BSUB -R rusage[mem=10000]',            
+            '#BSUB -M 50000000',
+            '#BSUB -R rusage[mem=50000]',            
             '#BSUB normal',
             '',
             cmd,
@@ -53,7 +53,14 @@ def main():
     args = arguments()
     files = [path.join(args.dirname, f) for f in listdir(args.dirname)]  # temporary for test
     for motif in files:
-        submitJob(args.dirname, motif, args.destination_dir)
+        dirname = path.join(args.destination_dir, path.basename(motif))
+        try:
+            resulted_files = listdir(dirname)
+        except OSError:
+            submitJob(args.dirname, motif, args.destination_dir)
+        if not len(resulted_files) > 0:
+            submitJob(args.dirname, motif, args.destination_dir)
+            print motif
     return 0
 
 
