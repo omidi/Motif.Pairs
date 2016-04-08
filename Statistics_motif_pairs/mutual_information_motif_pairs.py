@@ -4,6 +4,7 @@ import numpy as np
 from numpy import log, exp
 import os
 from scipy.special import gammaln
+import re
 
 
 def arguments():
@@ -29,7 +30,15 @@ def arguments():
                         type=str, required=True,
                         help="""A BED file that contains regions of interest.
                         Mutual information is only calculated for the these regions.""")
+    parser.add_argument('-c', '--cutoff', dest='cutoff', action='store',
+                        type=float, required=False, default=0.5,
+                        help="""Posterior cutoff for selecting TFBS from the MotEvo output.
+                        (Default 0.5)""")
     args = parser.parse_args()
+    if args.cutoff>1 or args.cutoff<0:
+        print 'Posterior cutoff is invald!'
+        print 'Program halts!'
+        exit()
     return args
 
 
@@ -75,8 +84,25 @@ def correlation_score(N1, N2):
     return score
 
 
+def mutual_information(N1, N2):
+    pseudo = .5
+    p1 = {1:(np.sum(N1)+pseudo)/(len(N1) + 2*pseudo),
+          0:(len(N1) - np.sum(N1)+pseudo)/(len(N1) + 2*pseudo)}
+    p2 = {1:(np.sum(N2)+pseudo)/(len(N2) + 2*pseudo),
+          0:(len(N2) - np.sum(N2)+pseudo)/(len(N2) + 2*pseudo)}
+    p12 = {(1,1):(len([1 for n1, n2 in zip(N1,N2) if n1==1 and n2==1]) + pseudo) / (len(N1) + 4*pseudo),
+           (1,0):(len([1 for n1, n2 in zip(N1,N2) if n1==1 and n2==0]) + pseudo) / (len(N1) + 4*pseudo),
+           (0,1):(len([1 for n1, n2 in zip(N1,N2) if n1==0 and n2==1]) + pseudo) / (len(N1) + 4*pseudo),
+           (0,0):(len([1 for n1, n2 in zip(N1,N2) if n1==0 and n2==0]) + pseudo) / (len(N1) + 4*pseudo),
+           }
+    I = 0
+    for n1, n2 in zip(N1, N2):
+        I += p12[(n1, n2)] * np.log2( p12[(n1, n2)] / (p1[n1]*p2[n2]) )
+    return I
+
+
+
 def main():
-    
     args = arguments()
     args.motevo_dir = "/home/somidi/scratch/Tissue.Specificity/Motif.Pairs/MotEvo.Outputs/min.post.50/"
     args.overlapping = "/home/somidi/scratch/Tissue.Specificity/Motif.Pairs/Pairs.Counts/Overlapping/"
@@ -84,16 +110,15 @@ def main():
     motif_names = os.listdir(args.motevo_dir)
     header, double_counts = \
             load_double_counts_matrix(args.overlapping, args.motif, regions)
-
-    N1 = load_single_counts(args.motevo_dir, args.motif, regions)
+    # motif_names = [m for m in motif_names if re.search('RXR', m) ]
+    N1 = load_single_counts(args.motevo_dir, args.motif, regions, args.cutoff)
     for motif in motif_names:
-        N2 = load_single_counts(args.motevo_dir, motif, regions)
+        N2 = load_single_counts(args.motevo_dir, motif, regions, args.cutoff)
         print '\t'.join([motif,
-                         "%0.4f" % correlation_score(N1, N2),
+                         "%0.4f" % mutual_information(N1, N2),
                          "%d" % np.sum(double_counts[header[motif], ...]),
                          "%d" % len(regions),
                          ])
-
 
 
 if __name__ == '__main__':
