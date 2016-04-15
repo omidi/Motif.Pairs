@@ -5,6 +5,7 @@ from numpy import log, exp
 import os
 from scipy.special import gammaln
 import re
+import random
 
 
 def arguments():
@@ -96,8 +97,10 @@ def mutual_information(N1, N2):
            (0,0):(len([1 for n1, n2 in zip(N1,N2) if n1==0 and n2==0]) + pseudo) / (len(N1) + 4*pseudo),
            }
     I = 0
-    for n1, n2 in zip(N1, N2):
-        I += p12[(n1, n2)] * np.log2( p12[(n1, n2)] / (p1[n1]*p2[n2]) )
+    for n1 in [0,1]:
+        for n2 in [0,1]:
+            I += p12[(n1, n2)] * np.log2( p12[(n1, n2)] / (p1[n1]*p2[n2]) )
+
     return I
 
 
@@ -113,9 +116,17 @@ def main():
     # motif_names = [m for m in motif_names if re.search('RXR', m) ]
     N1 = load_single_counts(args.motevo_dir, args.motif, regions, args.cutoff)
     for motif in motif_names:
+        # motif = "YY1.closest.bed.filt"
         N2 = load_single_counts(args.motevo_dir, motif, regions, args.cutoff)
+        randomized = [mutual_information(N1, random.sample(N2, len(N2))) for i in xrange(1000)]
+        # print np.sum(N1)
+        # print np.sum(N2)
+        # print np.min(randomized), np.max(randomized)
+        # print np.std(randomized), np.mean(randomized), np.var(randomized)
+        I = mutual_information(N1, N2)
         print '\t'.join([motif,
-                         "%0.4f" % mutual_information(N1, N2),
+                         "%0.4f" % I,
+                         "%0.4f" % float((I - np.mean(randomized)) / np.std(randomized)),
                          "%d" % np.sum(double_counts[header[motif], ...]),
                          "%d" % len(regions),
                          ])

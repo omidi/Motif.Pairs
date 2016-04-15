@@ -35,7 +35,7 @@ def submitJob(motif_file, dest, regions, cutoff=0.5):
         "/home/somidi/scratch/Tissue.Specificity/codes/Motif.Pairs/Statistics_motif_pairs/mutual_information_motif_pairs.py \\\n",
         '-m "%s" \\\n' % motif_name,
         '-r "%s" \\\n' % regions,
-        '-c %f > %s\n' % (cutoff, dest),
+        '-c %f > "%s"\n' % (cutoff, dest),
     ])    
     with open("job_%s_mutual_info.sh" % job_name, "w") as inf:
         inf.write("\n".join([
@@ -45,7 +45,7 @@ def submitJob(motif_file, dest, regions, cutoff=0.5):
             '#BSUB -e "%s.stderr"' % job_name,
             '#BSUB -J "%s"' % job_name,
             # '#BSUB -M 100000000',
-            '#BSUB -R rusage[mem=100000]',
+#            '#BSUB -R rusage[mem=100000]',
             '#BSUB normal',
             '',
             cmd,
